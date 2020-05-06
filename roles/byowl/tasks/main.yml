@@ -8,7 +8,7 @@
     namespace: '{{ operator_namespace }}'
   register: resource_state
 
-- k8s_status:
+- operator_sdk.util.k8s_status:
     api_version: ripsaw.cloudbulldozer.io/v1alpha1
     kind: Benchmark
     name: "{{ meta.name }}"
@@ -32,38 +32,6 @@
     k8s:
       state: present
       definition: "{{ lookup('template', 'workload.yml') | from_yaml }}"
-    when: byowl.kind is not defined
-
-  - k8s_status:
-      api_version: ripsaw.cloudbulldozer.io/v1alpha1
-      kind: Benchmark
-      name: "{{ meta.name }}"
-      namespace: "{{ operator_namespace }}"
-      status:
-        state: Running
-        complete: false
-
-  when: resource_state.resources[0].status.state == "Starting"
-
-- block:
-
-  - name: Waiting for pods to complete....
-    k8s_facts:
-      kind: pod
-      api_version: v1
-      namespace: '{{ operator_namespace }}'
-      label_selectors:
-        - app = byowl-{{ trunc_uuid }}
-    register: client_pods
-
-  - k8s_status:
-      api_version: ripsaw.cloudbulldozer.io/v1alpha1
-      kind: Benchmark
-      name: "{{ meta.name }}"
-      namespace: "{{ operator_namespace }}"
-      status:
-        state: Complete
-        complete: true
-    when: "byowl.clients == (client_pods|json_query('resources[].status[]')|selectattr('phase','match','Succeeded')|list|length)"
-
-  when: resource_state.resources[0].status.state == "Running"
+    when: byowl.clients > 0
+    with_sequence: start=1 count={{ byowl.clients }}
+    #with_sequence: start=1 count=100

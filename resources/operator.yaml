@@ -20,15 +20,20 @@ spec:
           - /usr/local/bin/ao-logs
           - /tmp/ansible-operator/runner
           - stdout
-          image: quay.io/benchmark-operator/benchmark-operator:master
-          imagePullPolicy: "Always"
+            #image: quay.io/benchmark-operator/benchmark-operator:latest
+          image: quay.io/abdasgupta/benchmark-operator:dev
+          imagePullPolicy: Always
+          imagePullSecrets:
+            -name: abdasgupta-pull-secret
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
-            readOnly: true
+            #readOnly: true
         - name: benchmark-operator
-          image: quay.io/benchmark-operator/benchmark-operator:master
+          image: quay.io/abdasgupta/benchmark-operator:dev
           imagePullPolicy: Always
+          imagePullSecrets:
+            -name: abdasgupta-pull-secret
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -48,7 +53,8 @@ spec:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
         - name: redis-master
-          image: k8s.gcr.io/redis:v1
+          image: redis
+          #image: k8s.gcr.io/redis:v1
           env:
             - name: MASTER
               value: "true"
